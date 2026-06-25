@@ -943,9 +943,12 @@ export class InputController {
 		this.ctx.ui.stop();
 
 		try {
-			// pid=0 → entire foreground process group; the shell receives
-			// SIGTSTP and parks the job.
-			process.kill(0, "SIGTSTP");
+			// SIGTSTP can be caught (e.g. Bun may install a no-op handler when stdin
+			// is in raw mode, or omp itself may catch it) — if caught, the process
+			// never stops and the shell never sends SIGCONT to restart the TUI.
+			// SIGSTOP (signal 19) cannot be caught or ignored, guaranteeing the
+			// process stops so the shell's job control can later resume it via fg.
+			process.kill(0, "SIGSTOP");
 		} catch (err) {
 			// Either the runtime refused the signal or the kernel rejected
 			// it (some sandboxes block sending to pid=0). Tear the resume

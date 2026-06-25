@@ -340,6 +340,9 @@ export class StdioTransport implements MCPTransport {
 			platform: process.platform,
 		});
 
+		// Spawn in a new session (detached → setsid) so the MCP child process
+		// tree has no controlling terminal and is immune to terminal job-control
+		// signals (SIGTSTP from Ctrl+Z, SIGTTIN from background tty reads).
 		this.#process = spawn({
 			cmd: spawnCommand.cmd,
 			cwd,
@@ -348,6 +351,7 @@ export class StdioTransport implements MCPTransport {
 			stdout: "pipe",
 			stderr: "pipe",
 			windowsHide: spawnCommand.windowsHide,
+			detached: true,
 		});
 
 		this.#connected = true;
